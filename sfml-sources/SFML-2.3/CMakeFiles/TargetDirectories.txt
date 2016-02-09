@@ -1,0 +1,5 @@
+/home/morda/dev/gravity/sfml-sources/SFML-2.3/src/SFML/Audio/CMakeFiles/sfml-audio.dir
+/home/morda/dev/gravity/sfml-sources/SFML-2.3/src/SFML/Graphics/CMakeFiles/sfml-graphics.dir
+/home/morda/dev/gravity/sfml-sources/SFML-2.3/src/SFML/Network/CMakeFiles/sfml-network.dir
+/home/morda/dev/gravity/sfml-sources/SFML-2.3/src/SFML/System/CMakeFiles/sfml-system.dir
+/home/morda/dev/gravity/sfml-sources/SFML-2.3/src/SFML/Window/CMakeFiles/sfml-window.dir
