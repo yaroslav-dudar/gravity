@@ -1,0 +1,6 @@
+/home/morda/dev/gravity/box2d-sources/Box2D-master/Box2D/Box2D/CMakeFiles/Box2D.dir
+/home/morda/dev/gravity/box2d-sources/Box2D-master/Box2D/Box2D/CMakeFiles/Box2D_shared.dir
+/home/morda/dev/gravity/box2d-sources/Box2D-master/Box2D/HelloWorld/CMakeFiles/HelloWorld.dir
+/home/morda/dev/gravity/box2d-sources/Box2D-master/Box2D/Testbed/CMakeFiles/Testbed.dir
+/home/morda/dev/gravity/box2d-sources/Box2D-master/Box2D/glew/CMakeFiles/glew.dir
+/home/morda/dev/gravity/box2d-sources/Box2D-master/Box2D/glfw/CMakeFiles/glfw.dir
