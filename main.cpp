@@ -48,15 +48,16 @@ void createBox(b2World& world, float x, float y)
 int main()
 {
     sf::RenderWindow window(sf::VideoMode(800, 600), "SFML and Box2d");
+    sf::Color grey = sf::Color(128,128,128);
 
     b2Vec2 gravity(0.f, 9.8f);
     b2World* world = new b2World(gravity);
 
     createGround(*world, 400, 600);
 
-    for (int i = 0; i < 50; i++)
+    for (int i = 0; i < 200; i++)
     {
-        createBox(*world, 100.f + i * 10, 200.f);
+        createBox(*world, 100.f + i * 3, 200.f);
     }
 
     while (window.isOpen())
@@ -80,11 +81,14 @@ int main()
             if (body->GetType() == b2_dynamicBody)
             {
                 sf::RectangleShape rect;
-                rect.setSize(sf::Vector2f(20.f, 20.f));
+                rect.setSize(sf::Vector2f(18.f, 18.f));
                 // The origin of an object defines the center point for all transformations
                 rect.setOrigin(10.f, 10.f);
+
                 rect.setFillColor(sf::Color::White);
-                std::cout << body->GetPosition().y << " dynamic" << "\n";
+                rect.setOutlineColor(grey);
+                rect.setOutlineThickness(2.f);
+
                 rect.setPosition(body->GetPosition().x, body->GetPosition().y);
                 rect.setRotation(body->GetAngle() * 180/b2_pi);
                 window.draw(rect);
@@ -93,7 +97,6 @@ int main()
                 rect.setFillColor(sf::Color::White);
                 rect.setSize(sf::Vector2f(800, 20));
                 rect.setOrigin(400.f, 10.f);
-                std::cout << body->GetPosition().y << " static" << "\n";
                 rect.setPosition(body->GetPosition().x, body->GetPosition().y);
                 rect.setRotation(body->GetAngle() * 180/b2_pi);
                 window.draw(rect);
