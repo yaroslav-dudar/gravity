@@ -12,7 +12,7 @@ void createGround(b2World& world, float x, float y)
     b2Body* body = world.CreateBody(&rectBodyDef);
 
     b2PolygonShape shape;
-    shape.SetAsBox(800.f, 20.f);
+    shape.SetAsBox(400.f, 10.f);
 
     b2FixtureDef fixtureDef;
     fixtureDef.shape = &shape;
@@ -29,9 +29,10 @@ void createBox(b2World& world, float x, float y)
     rectBodyDef.angle = 0; //set the starting angle
 
     b2Body* body = world.CreateBody(&rectBodyDef);
+    //body->SetTransform(body->GetPosition(), 0.1f);
 
     b2PolygonShape shape;
-    shape.SetAsBox(20.f, 20.f);
+    shape.SetAsBox(10.f, 10.f);
 
     b2FixtureDef fixtureDef;
     fixtureDef.shape = &shape;
@@ -39,7 +40,7 @@ void createBox(b2World& world, float x, float y)
     fixtureDef.density = 1.0f;
     // Override the default friction.
     fixtureDef.friction = 0.3f;
-    fixtureDef.restitution = 0.4f;
+    fixtureDef.restitution = 0.8f;
 
     body->CreateFixture(&fixtureDef);
 }
@@ -50,10 +51,13 @@ int main()
 
     b2Vec2 gravity(0.f, 9.8f);
     b2World* world = new b2World(gravity);
-    std::cout << world;
 
-    createGround(*world, 0, 580);
-    createBox(*world, 100.f, 100.f);
+    createGround(*world, 400, 600);
+
+    for (int i = 0; i < 50; i++)
+    {
+        createBox(*world, 100.f + i * 10, 200.f);
+    }
 
     while (window.isOpen())
     {
@@ -78,16 +82,18 @@ int main()
                 sf::RectangleShape rect;
                 rect.setSize(sf::Vector2f(20.f, 20.f));
                 // The origin of an object defines the center point for all transformations
-                rect.setOrigin(20.f, 20.f);
+                rect.setOrigin(10.f, 10.f);
                 rect.setFillColor(sf::Color::White);
+                std::cout << body->GetPosition().y << " dynamic" << "\n";
                 rect.setPosition(body->GetPosition().x, body->GetPosition().y);
                 rect.setRotation(body->GetAngle() * 180/b2_pi);
                 window.draw(rect);
             } else {
                 sf::RectangleShape rect;
                 rect.setFillColor(sf::Color::White);
-                rect.setOrigin(400.f, 10.f);
                 rect.setSize(sf::Vector2f(800, 20));
+                rect.setOrigin(400.f, 10.f);
+                std::cout << body->GetPosition().y << " static" << "\n";
                 rect.setPosition(body->GetPosition().x, body->GetPosition().y);
                 rect.setRotation(body->GetAngle() * 180/b2_pi);
                 window.draw(rect);
