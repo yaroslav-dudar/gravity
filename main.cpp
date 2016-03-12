@@ -2,8 +2,9 @@
 #include <Box2D/Box2D.h>
 
 #include <iostream>
+#include <math.h>
 
-void createGround(b2World& world, float x, float y)
+b2Body* createGround(b2World& world, float x, float y)
 {
     b2BodyDef rectBodyDef;
     rectBodyDef.type = b2_staticBody;
@@ -12,13 +13,14 @@ void createGround(b2World& world, float x, float y)
     b2Body* body = world.CreateBody(&rectBodyDef);
 
     b2PolygonShape shape;
-    shape.SetAsBox(400.f, 10.f);
+    shape.SetAsBox(40.f, 40.f);
 
     b2FixtureDef fixtureDef;
     fixtureDef.shape = &shape;
     fixtureDef.density = 0.0f;
 
     body->CreateFixture(&fixtureDef);
+    return body;
 }
 
 void createBox(b2World& world, float x, float y)
@@ -40,9 +42,26 @@ void createBox(b2World& world, float x, float y)
     fixtureDef.density = 1.0f;
     // Override the default friction.
     fixtureDef.friction = 0.3f;
-    fixtureDef.restitution = 0.8f;
+    fixtureDef.restitution = 0.5f;
 
     body->CreateFixture(&fixtureDef);
+    body->SetGravityScale(0);
+}
+
+b2Vec2 getBodyForce(b2Body& planet_body, b2Body& dynamic_body)
+{
+    b2Vec2 planet_distance = b2Vec2(0,0);
+    b2Vec2 planet_position = planet_body.GetWorldCenter();
+
+    planet_distance += dynamic_body.GetWorldCenter() - planet_position;
+    // Calculate the magnitude of the force to apply to the debris.
+    // This is proportional to the distance between the planet and
+    // the debris. The force is weaker the further away the debris.
+    float force = (dynamic_body.GetMass() * 9.8f) / pow(planet_distance.Length(), 2);
+    // change the direction of the vector so that the force will be
+    // towards the planet.
+    planet_distance *= force * -1;
+    return planet_distance;
 }
 
 int main()
@@ -53,11 +72,11 @@ int main()
     b2Vec2 gravity(0.f, 9.8f);
     b2World* world = new b2World(gravity);
 
-    createGround(*world, 400, 600);
+    b2Body* ground = createGround(*world, 400, 300);
 
-    for (int i = 0; i < 200; i++)
+    for (int i = 0; i < 10; i++)
     {
-        createBox(*world, 100.f + i * 3, 200.f);
+        createBox(*world, 200.f + i * 40, 50.f);
     }
 
     while (window.isOpen())
@@ -80,10 +99,13 @@ int main()
         {
             if (body->GetType() == b2_dynamicBody)
             {
+                // custom gravity
+                body->ApplyForce(getBodyForce(*ground, *body), body->GetWorldCenter(), true);
+
                 sf::RectangleShape rect;
                 rect.setSize(sf::Vector2f(18.f, 18.f));
                 // The origin of an object defines the center point for all transformations
-                rect.setOrigin(10.f, 10.f);
+                rect.setOrigin(9.f, 9.f);
 
                 rect.setFillColor(sf::Color::White);
                 rect.setOutlineColor(grey);
@@ -95,8 +117,8 @@ int main()
             } else {
                 sf::RectangleShape rect;
                 rect.setFillColor(sf::Color::White);
-                rect.setSize(sf::Vector2f(800, 20));
-                rect.setOrigin(400.f, 10.f);
+                rect.setSize(sf::Vector2f(80, 80));
+                rect.setOrigin(40.f, 40.f);
                 rect.setPosition(body->GetPosition().x, body->GetPosition().y);
                 rect.setRotation(body->GetAngle() * 180/b2_pi);
                 window.draw(rect);
