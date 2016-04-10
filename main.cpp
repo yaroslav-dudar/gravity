@@ -12,8 +12,8 @@ b2Body* createGround(b2World& world, float x, float y)
 
     b2Body* body = world.CreateBody(&rectBodyDef);
 
-    b2PolygonShape shape;
-    shape.SetAsBox(40.f, 40.f);
+    b2CircleShape shape;
+    shape.m_radius = 40.f;
 
     b2FixtureDef fixtureDef;
     fixtureDef.shape = &shape;
@@ -23,7 +23,7 @@ b2Body* createGround(b2World& world, float x, float y)
     return body;
 }
 
-void createBox(b2World& world, float x, float y)
+b2Body* createBox(b2World& world, float x, float y)
 {
     b2BodyDef rectBodyDef;
     rectBodyDef.type = b2_dynamicBody; //this will be a dynamic body
@@ -46,6 +46,8 @@ void createBox(b2World& world, float x, float y)
 
     body->CreateFixture(&fixtureDef);
     body->SetGravityScale(0);
+
+    return body;
 }
 
 b2Vec2 getBodyForce(b2Body& planet_body, b2Body& dynamic_body)
@@ -57,7 +59,7 @@ b2Vec2 getBodyForce(b2Body& planet_body, b2Body& dynamic_body)
     // Calculate the magnitude of the force to apply to the debris.
     // This is proportional to the distance between the planet and
     // the debris. The force is weaker the further away the debris.
-    float force = (dynamic_body.GetMass() * 9.8f) / pow(planet_distance.Length(), 2);
+    float force = (dynamic_body.GetMass() * 100.f) / pow(planet_distance.Length(), 2);
     // change the direction of the vector so that the force will be
     // towards the planet.
     planet_distance *= force * -1;
@@ -69,15 +71,19 @@ int main()
     sf::RenderWindow window(sf::VideoMode(800, 600), "SFML and Box2d");
     sf::Color grey = sf::Color(128,128,128);
 
+    sf::Texture earth;
+    if (!earth.loadFromFile("media/earth.png"))
+        return -1;
+
     b2Vec2 gravity(0.f, 9.8f);
     b2World* world = new b2World(gravity);
 
     b2Body* ground = createGround(*world, 400, 300);
 
-    for (int i = 0; i < 10; i++)
-    {
-        createBox(*world, 200.f + i * 40, 50.f);
-    }
+    // init box
+    b2Body* box = createBox(*world, 200.f, 50.f);
+    box->ApplyForce(b2Vec2(-5000.f,200000.f), box->GetWorldCenter(), false);
+
 
     while (window.isOpen())
     {
@@ -115,13 +121,14 @@ int main()
                 rect.setRotation(body->GetAngle() * 180/b2_pi);
                 window.draw(rect);
             } else {
-                sf::RectangleShape rect;
-                rect.setFillColor(sf::Color::White);
-                rect.setSize(sf::Vector2f(80, 80));
-                rect.setOrigin(40.f, 40.f);
-                rect.setPosition(body->GetPosition().x, body->GetPosition().y);
-                rect.setRotation(body->GetAngle() * 180/b2_pi);
-                window.draw(rect);
+                sf::CircleShape circle;
+                circle.setTexture(&earth);
+                circle.setFillColor(sf::Color::White);
+                circle.setRadius(40.f);
+                circle.setOrigin(40.f, 40.f);
+                circle.setPosition(body->GetPosition().x, body->GetPosition().y);
+                circle.setRotation(body->GetAngle() * 180/b2_pi);
+                window.draw(circle);
             }
         }
 
