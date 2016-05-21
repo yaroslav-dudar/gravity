@@ -4,7 +4,126 @@
 #include <iostream>
 #include <math.h>
 
-b2Body* createGround(b2World& world, float x, float y)
+#include <stdexcept>
+#include <typeinfo>
+using namespace std;
+
+class Box2DWorld
+{
+    private:
+        b2World* world;
+        b2Body* ground;
+    public:
+        Box2DWorld();
+
+        b2Body* create_ground(b2World&, float, float);
+        b2Body* create_box(b2World&, float, float);
+        b2Vec2 apply_force(b2Body& box);
+
+        b2World* get_world();
+
+};
+
+class SFMLWindow
+{
+    private:
+        int width, height;
+        sf::RenderWindow sfml_window;
+        sf::Color border_color;
+        sf::Texture earth;
+        Box2DWorld world;
+    public:
+        SFMLWindow(int, int);
+        void run();
+        void render_body(b2Body *);
+
+};
+
+SFMLWindow::SFMLWindow(int width, int height)
+{
+    sfml_window.create(sf::VideoMode(width, height), "SFML and Box2d");
+    border_color = sf::Color(128,128,128);
+
+    if (!earth.loadFromFile("media/earth.png"))
+        throw std::invalid_argument("Invalid texture path");
+
+    world = Box2DWorld();
+}
+
+void SFMLWindow::render_body(b2Body *body)
+{
+    if (body->GetType() == b2_dynamicBody)
+    {
+        // apply force to box (simulate gravity)
+        world.apply_force(*body);
+
+        sf::RectangleShape rect;
+        rect.setSize(sf::Vector2f(18.f, 18.f));
+        // The origin of an object defines the center point for all transformations
+        rect.setOrigin(9.f, 9.f);
+
+        rect.setFillColor(sf::Color::White);
+        rect.setOutlineColor(border_color);
+        rect.setOutlineThickness(2.f);
+
+        rect.setPosition(body->GetPosition().x, body->GetPosition().y);
+        rect.setRotation(body->GetAngle() * 180/b2_pi);
+        sfml_window.draw(rect);
+    } else {
+        sf::CircleShape circle;
+        circle.setTexture(&earth);
+        circle.setFillColor(sf::Color::White);
+        circle.setRadius(40.f);
+        circle.setOrigin(40.f, 40.f);
+        circle.setPosition(body->GetPosition().x, body->GetPosition().y);
+        circle.setRotation(body->GetAngle() * 180/b2_pi);
+        sfml_window.draw(circle);
+    }
+}
+
+void SFMLWindow::run()
+{
+    while (sfml_window.isOpen())
+    {
+        sf::Event event;
+        while (sfml_window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+            {
+                sfml_window.close();
+            }
+        }
+
+        sfml_window.clear();
+        world.get_world()->Step(1/60.f, 8, 3);
+
+        for (b2Body* body = world.get_world()->GetBodyList(); body != 0; body = body->GetNext())
+        {
+            render_body(body);
+        }
+
+        sfml_window.display();
+    }
+}
+
+Box2DWorld::Box2DWorld()
+{
+    // init world
+    world = new b2World(b2Vec2(0.f, 9.8f));
+    // create static body
+    ground = create_ground(*world, 400, 300);
+    // create dynamic bodies and apply init forse to them
+    b2Body* box = create_box(*world, 200.f, 50.f);
+    box->ApplyForce(b2Vec2(-5000.f,200000.f), box->GetWorldCenter(), false);
+
+}
+
+b2World* Box2DWorld::get_world()
+{
+    return world;
+}
+
+b2Body* Box2DWorld::create_ground(b2World& world, float x, float y)
 {
     b2BodyDef rectBodyDef;
     rectBodyDef.type = b2_staticBody;
@@ -23,7 +142,7 @@ b2Body* createGround(b2World& world, float x, float y)
     return body;
 }
 
-b2Body* createBox(b2World& world, float x, float y)
+b2Body* Box2DWorld::create_box(b2World& world, float x, float y)
 {
     b2BodyDef rectBodyDef;
     rectBodyDef.type = b2_dynamicBody; //this will be a dynamic body
@@ -50,90 +169,26 @@ b2Body* createBox(b2World& world, float x, float y)
     return body;
 }
 
-b2Vec2 getBodyForce(b2Body& planet_body, b2Body& dynamic_body)
+b2Vec2 Box2DWorld::apply_force(b2Body& box)
 {
     b2Vec2 planet_distance = b2Vec2(0,0);
-    b2Vec2 planet_position = planet_body.GetWorldCenter();
+    b2Vec2 planet_position = ground->GetWorldCenter();
 
-    planet_distance += dynamic_body.GetWorldCenter() - planet_position;
+    planet_distance += box.GetWorldCenter() - planet_position;
     // Calculate the magnitude of the force to apply to the debris.
     // This is proportional to the distance between the planet and
     // the debris. The force is weaker the further away the debris.
-    float force = (dynamic_body.GetMass() * 100.f) / pow(planet_distance.Length(), 2);
+    float force = (box.GetMass() * 100.f) / pow(planet_distance.Length(), 2);
+    // apply force to box
     // change the direction of the vector so that the force will be
     // towards the planet.
     planet_distance *= force * -1;
-    return planet_distance;
+    box.ApplyForce(planet_distance, box.GetWorldCenter(), true);
 }
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(800, 600), "SFML and Box2d");
-    sf::Color grey = sf::Color(128,128,128);
-
-    sf::Texture earth;
-    if (!earth.loadFromFile("media/earth.png"))
-        return -1;
-
-    b2Vec2 gravity(0.f, 9.8f);
-    b2World* world = new b2World(gravity);
-
-    b2Body* ground = createGround(*world, 400, 300);
-
-    // init box
-    b2Body* box = createBox(*world, 200.f, 50.f);
-    box->ApplyForce(b2Vec2(-5000.f,200000.f), box->GetWorldCenter(), false);
-
-
-    while (window.isOpen())
-    {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-            {
-                window.close();
-            }
-        }
-
-        /** Simulate the world */
-        world->Step(1/60.f, 8, 3);
-
-        window.clear();
-        /** Iterate over box2d bodies and draw them */
-        for (b2Body* body = world->GetBodyList(); body != 0; body = body->GetNext())
-        {
-            if (body->GetType() == b2_dynamicBody)
-            {
-                // custom gravity
-                body->ApplyForce(getBodyForce(*ground, *body), body->GetWorldCenter(), true);
-
-                sf::RectangleShape rect;
-                rect.setSize(sf::Vector2f(18.f, 18.f));
-                // The origin of an object defines the center point for all transformations
-                rect.setOrigin(9.f, 9.f);
-
-                rect.setFillColor(sf::Color::White);
-                rect.setOutlineColor(grey);
-                rect.setOutlineThickness(2.f);
-
-                rect.setPosition(body->GetPosition().x, body->GetPosition().y);
-                rect.setRotation(body->GetAngle() * 180/b2_pi);
-                window.draw(rect);
-            } else {
-                sf::CircleShape circle;
-                circle.setTexture(&earth);
-                circle.setFillColor(sf::Color::White);
-                circle.setRadius(40.f);
-                circle.setOrigin(40.f, 40.f);
-                circle.setPosition(body->GetPosition().x, body->GetPosition().y);
-                circle.setRotation(body->GetAngle() * 180/b2_pi);
-                window.draw(circle);
-            }
-        }
-
-        window.display();
-    }
-
+    SFMLWindow sfml_window(800, 600);
+    sfml_window.run();
     return 0;
 }
